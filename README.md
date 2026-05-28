@@ -25,10 +25,10 @@ Open the frontend at `http://localhost:5173` and the API at `http://localhost:80
 
 ## Railway
 
-Railway uses `nixpacks.toml` plus `railway.json` so both Python and Node are installed during build:
+Railway uses `nixpacks.toml` plus `railway.json` so both Python and Node are installed during build. The install phase calls the `pip` executable directly because Railway/Nixpacks can provide `pip` as a package executable even when `python -m pip` is unavailable:
 
 ```bash
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 npm --prefix frontend install
 npm --prefix frontend run build
 python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}

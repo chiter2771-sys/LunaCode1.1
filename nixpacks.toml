@@ -1,12 +1,12 @@
 # Railway/Nixpacks needs both runtimes: Node builds the Vite UI, Python runs FastAPI.
 # Without an explicit Python package here Nixpacks may infer only Node and `pip` will be missing.
 [phases.setup]
-nixPkgs = ["nodejs_20", "python311", "python311Packages.pip"]
+nixPkgs = ["nodejs_20", "python311", "python311Packages.pip", "python311Packages.setuptools", "python311Packages.wheel"]
 
 [phases.install]
 cmds = [
-  "python -m pip install --upgrade pip",
-  "python -m pip install -r requirements.txt",
+  "pip --version",
+  "pip install -r requirements.txt",
   "npm install",
   "npm --prefix frontend install"
 ]

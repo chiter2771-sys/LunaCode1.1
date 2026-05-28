@@ -37,6 +37,16 @@ npm --prefix frontend run build
 
 Set provider API keys as Railway runtime environment variables. API keys are only read by the backend and are never sent to the browser. If Docker reports `SecretsUsedInArgOrEnv` for provider key names, keep those variables scoped to runtime/deploy settings rather than build-time variables when possible; LunaCode does not require secrets during the frontend build.
 
+## AI routing
+
+Recommended setup uses OpenRouter so one backend-only key can route each role to a different model:
+
+- `OPENROUTER_PLANNER_MODEL` for task splitting and routing.
+- `OPENROUTER_CODER_MODEL` for implementation and patch generation.
+- `OPENROUTER_DEBUGGER_MODEL` for stack traces and minimal fixes.
+
+If OpenRouter is not configured, LunaCode falls back to direct Qwen/DeepSeek keys. Provider billing or quota errors are returned as readable Russian messages instead of crashing the chat.
+
 ## Workspace
 
 Projects are isolated below `LUNACODE_WORKSPACE` (default: `/workspace`). File APIs reject path traversal outside the workspace.

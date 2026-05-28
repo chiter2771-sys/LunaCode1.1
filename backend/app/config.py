@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     deepseek_base_url: str = Field(default='https://api.deepseek.com', alias='DEEPSEEK_BASE_URL')
     deepseek_coder_model: str = Field(default='deepseek-coder', alias='DEEPSEEK_CODER_MODEL')
 
+    openrouter_api_key: str | None = Field(default=None, alias='OPENROUTER_API_KEY')
+    openrouter_base_url: str = Field(default='https://openrouter.ai/api/v1', alias='OPENROUTER_BASE_URL')
+    openrouter_site_url: str = Field(default='https://lunacode.local', alias='OPENROUTER_SITE_URL')
+    openrouter_planner_model: str = Field(default='qwen/qwen-2.5-72b-instruct', alias='OPENROUTER_PLANNER_MODEL')
+    openrouter_coder_model: str = Field(default='deepseek/deepseek-chat', alias='OPENROUTER_CODER_MODEL')
+    openrouter_debugger_model: str = Field(default='qwen/qwen-2.5-coder-32b-instruct', alias='OPENROUTER_DEBUGGER_MODEL')
+
     def ensure_workspace(self) -> Path:
         self.workspace_root.mkdir(parents=True, exist_ok=True)
         return self.workspace_root

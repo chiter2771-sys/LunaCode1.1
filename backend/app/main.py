@@ -43,6 +43,20 @@ async def health() -> dict:
     return {'ok': True, 'name': 'LunaCode'}
 
 
+@app.get('/api/settings/public')
+async def public_settings() -> dict:
+    provider = 'OpenRouter' if settings.openrouter_api_key else ('DeepSeek/Qwen' if settings.deepseek_api_key or settings.qwen_api_key else 'offline')
+    return {
+        'provider': provider,
+        'openrouter_configured': bool(settings.openrouter_api_key),
+        'models': {
+            'planner': settings.openrouter_planner_model if settings.openrouter_api_key else settings.qwen_planner_model,
+            'coder': settings.openrouter_coder_model if settings.openrouter_api_key else settings.deepseek_coder_model,
+            'debugger': settings.openrouter_debugger_model if settings.openrouter_api_key else settings.qwen_debugger_model,
+        },
+    }
+
+
 @app.get('/api/projects/{project}/tree')
 async def tree(project: str):
     return files.tree(project)

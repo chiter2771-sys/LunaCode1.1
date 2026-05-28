@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Code2, Eye, FilePlus2, Files, FolderPlus, Home, LayoutDashboard, PanelRightOpen, Play, Plus, RefreshCw, Search, Settings, Sparkles, TerminalSquare, Trash2 } from 'lucide-react';
+import { Bot, Code2, Database, Eye, FilePlus2, Files, FolderPlus, Globe2, Home, KeyRound, LayoutDashboard, Package, PanelRightOpen, Play, Plus, RefreshCw, Search, Settings, Sparkles, TerminalSquare, Trash2 } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import ReactMarkdown from 'react-markdown';
 import { FileNode, LunaAPI, PublicSettings, RunResult } from './lib/api';
 
 type Tab = { path: string; content: string; dirty: boolean };
 type Message = { role: 'user' | 'assistant'; content: string };
-type Page = 'home' | 'workspace' | 'preview' | 'settings';
+type Page = 'home' | 'workspace' | 'preview' | 'settings' | 'deployments' | 'database' | 'secrets' | 'packages';
 
 const CHAT_STORAGE_KEY = 'lunacode.chat.default';
 const DEFAULT_MESSAGES: Message[] = [{ role: 'assistant', content: 'Привет! Я Луна. Могу просто общаться, а для задач по коду — планировать, писать, запускать и исправлять проект.' }];
@@ -146,8 +146,12 @@ export function App() {
     setBusy(true);
     try {
       const response = await LunaAPI.chat(text, activePath);
-      if (response.mode === 'chat') {
+      if (response.mode === 'chat' || response.mode === 'scaffold') {
         setMessages((current) => [...current, { role: 'assistant', content: response.answer || 'Я на связи.' }]);
+        if (response.mode === 'scaffold') {
+          await refreshTree();
+          if (response.files?.[0]) await openFile(response.files[0]);
+        }
         setBusy(false);
         return;
       }
@@ -176,6 +180,10 @@ export function App() {
     { id: 'home' as Page, label: 'Домой', icon: Home },
     { id: 'workspace' as Page, label: 'Код', icon: Code2 },
     { id: 'preview' as Page, label: 'Превью', icon: Eye },
+    { id: 'deployments' as Page, label: 'Деплой', icon: Globe2 },
+    { id: 'database' as Page, label: 'БД', icon: Database },
+    { id: 'secrets' as Page, label: 'Secrets', icon: KeyRound },
+    { id: 'packages' as Page, label: 'Пакеты', icon: Package },
     { id: 'settings' as Page, label: 'ИИ', icon: Settings },
   ];
 
@@ -209,6 +217,19 @@ export function App() {
           {page === 'home' && <section className="home-page"><LayoutDashboard size={34} /><h1>Рабочая область как в Replit, но проще</h1><p>Слева файлы и проект, в центре редактор и превью, снизу консоль, справа Луна. Всё на русском и без лишнего шума.</p><div className="home-cards"><button onClick={createFile}>Создать файл</button><button onClick={() => sendChat('Создай todo приложение')}>Создать через ИИ</button><button onClick={() => setPage('settings')}>OpenRouter</button></div></section>}
 
           {page === 'settings' && <section className="settings-page"><h1>ИИ и модели</h1><p>Ключи вводятся в Railway Variables или `.env`. Frontend видит только статус, ключи остаются на backend.</p><div className="settings-grid"><div><span>Провайдер</span><strong>{settings?.provider || 'загрузка...'}</strong></div><div><span>OpenRouter</span><strong>{settings?.openrouter_configured ? 'подключён' : 'не настроен'}</strong></div><div><span>Планировщик</span><code>{settings?.models.planner}</code></div><div><span>Программист</span><code>{settings?.models.coder}</code></div><div><span>Отладчик</span><code>{settings?.models.debugger}</code></div></div><pre className="env-snippet">OPENROUTER_API_KEY=sk-or-...{`\n`}OPENROUTER_PLANNER_MODEL=qwen/qwen-2.5-72b-instruct{`\n`}OPENROUTER_CODER_MODEL=deepseek/deepseek-chat{`\n`}OPENROUTER_DEBUGGER_MODEL=qwen/qwen-2.5-coder-32b-instruct</pre></section>}
+
+          {(['deployments', 'database', 'secrets', 'packages'] as Page[]).includes(page) && <section className="replit-tool-page">
+            <div className="tool-hero">
+              <span className="tool-kicker">Раздел LunaCode</span>
+              <h1>{page === 'deployments' ? 'Deployments' : page === 'database' ? 'Database' : page === 'secrets' ? 'Secrets' : 'Packages'}</h1>
+              <p>{page === 'deployments' ? 'Подготовка Railway/Vercel-like деплоя, команды запуска и preview URL.' : page === 'database' ? 'Подключения к SQLite/Postgres будут храниться как лёгкие project resources.' : page === 'secrets' ? 'Переменные окружения и API-ключи остаются на backend и не попадают во frontend.' : 'Установка npm/pip пакетов и быстрые шаблоны команд.'}</p>
+            </div>
+            <div className="tool-grid">
+              <article><strong>Статус</strong><span>готово для MVP</span></article>
+              <article><strong>Команда</strong><code>{page === 'deployments' ? 'npm run start' : page === 'packages' ? 'npm install / pip install' : page === 'secrets' ? '.env / Railway Variables' : 'sqlite / postgres'}</code></article>
+              <article><strong>Следующий шаг</strong><span>Попросите Луну настроить этот раздел под проект.</span></article>
+            </div>
+          </section>}
 
           {(page === 'workspace' || page === 'preview') && <div className="work-split">
             <div className="editor-pane">

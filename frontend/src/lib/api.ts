@@ -20,6 +20,6 @@ export const LunaAPI = {
   delete: (path: string, project = 'default') => api(`/api/projects/${project}/files/${path}`, { method: 'DELETE' }),
   run: (command: string, project = 'default') => api<RunResult>('/api/run', { method: 'POST', headers: json, body: JSON.stringify({ project, command }) }),
   autoFix: (command: string, project = 'default') => api<AutoFixResult>('/api/autofix', { method: 'POST', headers: json, body: JSON.stringify({ project, command }) }),
-  chat: (message: string, active_file?: string, selected_text?: string, project = 'default') => api<{ mode: 'chat' | 'task'; answer?: string; plan?: string; task_id?: string }>('/api/chat', { method: 'POST', headers: json, body: JSON.stringify({ project, message, active_file, selected_text }) }),
+  chat: (message: string, active_file?: string, selected_text?: string, project = 'default') => api<{ mode: 'chat' | 'task' | 'scaffold'; answer?: string; plan?: string; task_id?: string; files?: string[] }>('/api/chat', { method: 'POST', headers: json, body: JSON.stringify({ project, message, active_file, selected_text }) }),
   task: (id: string) => api<{ status: string; result?: { content: string }; error?: string }>(`/api/tasks/${id}`)
 };

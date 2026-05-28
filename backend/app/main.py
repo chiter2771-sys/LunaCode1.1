@@ -11,6 +11,7 @@ from backend.app.services.executor import Executor
 from backend.app.services.file_manager import FileManager
 from backend.app.services.memory import MemoryStore
 from backend.app.services.playwright_tester import PlaywrightTester
+from backend.app.services.scaffolder import scaffold_web_prototype, should_scaffold
 from backend.app.services.task_queue import TaskQueue
 
 settings = get_settings()
@@ -140,6 +141,13 @@ async def chat(req: ChatRequest) -> dict:
     direct_answer = direct_chat_answer(req.message)
     if direct_answer:
         return {'mode': 'chat', 'answer': direct_answer}
+    if should_scaffold(req.message):
+        created = scaffold_web_prototype(files, memory, req.project, req.message)
+        return {
+            'mode': 'scaffold',
+            'answer': 'Готово: я реально создала файлы прототипа в проекте, а не просто ответила в чат. Откройте `index.html` или запустите `python -m http.server 3000` для preview.',
+            'files': created,
+        }
 
     context = {
         'memory': memory.snapshot(req.project),

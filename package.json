@@ -1,0 +1,20 @@
+{
+  "name": "lunacode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LunaCode - a lightweight AI IDE for Railway",
+  "scripts": {
+    "install:all": "npm --prefix frontend install",
+    "dev": "concurrently \"uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}",
+    "test": "python -m compileall backend && npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20",
+    "npm": ">=10"
+  }
+}

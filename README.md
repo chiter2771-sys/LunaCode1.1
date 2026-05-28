@@ -25,14 +25,16 @@ Open the frontend at `http://localhost:5173` and the API at `http://localhost:80
 
 ## Railway
 
-Railway uses `railway.json`:
+Railway uses `nixpacks.toml` plus `railway.json` so both Python and Node are installed during build:
 
 ```bash
-npm run build
-npm run start
+python -m pip install -r requirements.txt
+npm --prefix frontend install
+npm --prefix frontend run build
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
-Set provider API keys as Railway environment variables. API keys are only read by the backend and are never sent to the browser.
+Set provider API keys as Railway runtime environment variables. API keys are only read by the backend and are never sent to the browser. If Docker reports `SecretsUsedInArgOrEnv` for provider key names, keep those variables scoped to runtime/deploy settings rather than build-time variables when possible; LunaCode does not require secrets during the frontend build.
 
 ## Workspace
 

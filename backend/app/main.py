@@ -22,6 +22,29 @@ queue = TaskQueue(ai, memory)
 autofixer = AutoFixer(ai, executor, files, memory, settings.max_retries)
 tester = PlaywrightTester(executor, files)
 
+CASUAL_WORDS = {'але', 'алё', 'привет', 'hello', 'hi', 'здарова', 'ку', 'эй', 'спасибо', 'ок', 'окей'}
+CODE_INTENT_WORDS = {
+    'создай', 'сделай', 'напиши', 'исправь', 'запусти', 'собери', 'обнови', 'измени',
+    'код', 'файл', 'проект', 'app', 'приложение', 'ошибка', 'bug', 'fix', 'run', 'build',
+    'react', 'next', 'fastapi', 'express', 'python', 'node', 'html', 'css', 'js', 'api'
+}
+
+
+def direct_chat_answer(message: str) -> str | None:
+    normalized = message.strip().lower().strip('!?.,:;—- ')
+    words = {part for part in normalized.replace('ё', 'е').split() if part}
+    has_code_intent = any(word in normalized for word in CODE_INTENT_WORDS)
+    if not normalized:
+        return 'Я на связи. Напишите, что нужно сделать: создать проект, исправить ошибку, объяснить файл или просто задать вопрос.'
+    if normalized.replace('ё', 'е') in CASUAL_WORDS or (len(normalized) <= 24 and not has_code_intent):
+        return 'Да, я здесь 🙂 Напишите задачу обычным языком — если нужно кодить, я разобью её на шаги; если это простой вопрос, отвечу прямо в чате.'
+    if normalized.endswith('?') and not has_code_intent:
+        return 'Могу ответить прямо в чате. Если вопрос связан с проектом, уточните файл или цель — тогда подключу контекст кода.'
+    if words & {'кто', 'что', 'как', 'почему', 'зачем'} and not has_code_intent and len(normalized) < 120:
+        return 'Понял вопрос. Для общих вопросов я отвечаю без постановки задачи в очередь. Для задач по коду напишите действие: создать, исправить, запустить или объяснить.'
+    return None
+
+
 app = FastAPI(title='LunaCode API', version='0.1.0')
 app.add_middleware(
     CORSMiddleware,
@@ -114,6 +137,10 @@ async def test_preview(req: dict):
 
 @app.post('/api/chat')
 async def chat(req: ChatRequest) -> dict:
+    direct_answer = direct_chat_answer(req.message)
+    if direct_answer:
+        return {'mode': 'chat', 'answer': direct_answer}
+
     context = {
         'memory': memory.snapshot(req.project),
         'active_file': req.active_file,
@@ -122,7 +149,7 @@ async def chat(req: ChatRequest) -> dict:
     }
     plan = await ai.complete(ModelRole.planner, req.message, context)
     task = await queue.enqueue(req.project, f'AI: {req.message[:64]}', ModelRole.coder, {'prompt': req.message, 'context': {**context, 'plan': plan}})
-    return {'plan': plan, 'task_id': task.id}
+    return {'mode': 'task', 'plan': plan, 'task_id': task.id}
 
 
 @app.get('/api/tasks/{task_id}')

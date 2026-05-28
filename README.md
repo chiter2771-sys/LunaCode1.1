@@ -25,13 +25,14 @@ Open the frontend at `http://localhost:5173` and the API at `http://localhost:80
 
 ## Railway
 
-Railway uses `nixpacks.toml` plus `railway.json` so both Python and Node are installed during build. The install phase calls the `pip` executable directly because Railway/Nixpacks can provide `pip` as a package executable even when `python -m pip` is unavailable:
+Railway uses `nixpacks.toml` plus `railway.json` so both Python and Node are installed during build. Nix Python is PEP 668 externally managed, so LunaCode installs backend dependencies into `/opt/venv` instead of trying to mutate the global Nix Python environment:
 
 ```bash
-pip install -r requirements.txt
+virtualenv /opt/venv
+. /opt/venv/bin/activate && pip install -r requirements.txt
 npm --prefix frontend install
 npm --prefix frontend run build
-python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+/opt/venv/bin/python -m uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}
 ```
 
 Set provider API keys as Railway runtime environment variables. API keys are only read by the backend and are never sent to the browser. If Docker reports `SecretsUsedInArgOrEnv` for provider key names, keep those variables scoped to runtime/deploy settings rather than build-time variables when possible; LunaCode does not require secrets during the frontend build.
